@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Form Langganan - SEA Catering</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { color: #0b5394; }
+    form { padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 40px; }
+    label { display: block; margin-top: 12px; }
+    input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; background: #0b5394; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #06396b; }
+    .price-result {
+      background: #e7f3ff;
+      border-left: 4px solid #0b5394;
+      padding: 12px;
+      margin-top: 20px;
+      font-weight: bold;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Form Langganan (Subscription)</h2>
+
+  <form id="subscribeForm">
+    <label>Nama*<input type="text" id="name" required /></label>
+
+    <label>Nomor HP Aktif*
+      <input type="tel" id="phone" placeholder="+628123456789" required 
+        oninput="this.value = this.value.replace(/[^0-9+]/g, '')"/>
+    </label>
+
+    <label>Paket Makanan*</label>
+    <select id="plan" required>
+      <option value="">-- Pilih Paket --</option>
+      <option value="Diet Plan">Diet Plan - Rp30.000</option>
+      <option value="Protein Plan">Protein Plan - Rp40.000</option>
+      <option value="Royal Plan">Royal Plan - Rp60.000</option>
+    </select>
+
+    <label>Jenis Makan:</label>
+    <label><input type="checkbox" name="meal" value="Breakfast" /> Breakfast</label>
+    <label><input type="checkbox" name="meal" value="Lunch" /> Lunch</label>
+    <label><input type="checkbox" name="meal" value="Dinner" /> Dinner</label>
+
+    <label>Hari Pengiriman:</label>
+    <label><input type="checkbox" name="days" value="Senin" /> Senin</label>
+    <label><input type="checkbox" name="days" value="Selasa" /> Selasa</label>
+    <label><input type="checkbox" name="days" value="Rabu" /> Rabu</label>
+    <label><input type="checkbox" name="days" value="Kamis" /> Kamis</label>
+    <label><input type="checkbox" name="days" value="Jumat" /> Jumat</label>
+    <label><input type="checkbox" name="days" value="Sabtu" /> Sabtu</label>
+    <label><input type="checkbox" name="days" value="Minggu" /> Minggu</label>
+
+    <label>Alergi (Opsional)<textarea id="allergies"></textarea></label>
+
+    <div class="price-result" id="result">Klik "Hitung Harga" untuk melihat total langganan.</div>
+    <button type="button" onclick="previewHarga()">Hitung Harga</button>
+    <button type="submit">Kirim Pesanan</button>
+  </form>
+
+  <h2>Kirim Testimoni</h2>
+  <form id="testimonialForm">
+    <label>Nama Anda*<input type="text" id="userName" required /></label>
+    <label>Pesan Testimoni*<textarea id="userTestimonial" required></textarea></label>
+    <label>Rating (1–5)<input type="number" id="userRating" min="1" max="5" required /></label>
+    <button type="submit">Kirim Testimoni</button>
+  </form>
+
+  <script>
+    function hitungHarga(plan, meals, days) {
+      const harga = {
+        "Diet Plan": 30000,
+        "Protein Plan": 40000,
+        "Royal Plan": 60000
+      };
+      return harga[plan] * meals.length * days.length * 4.3;
+    }
+
+    function formatRumus(planHarga, mealCount, dayCount) {
+      return `Rp${planHarga.toLocaleString('id-ID')} × ${mealCount} × ${dayCount} × 4,3`;
+    }
+
+    function previewHarga() {
+      const plan = document.getElementById('plan').value;
+      const meals = [...document.querySelectorAll('input[name="meal"]:checked')];
+      const days = [...document.querySelectorAll('input[name="days"]:checked')];
+
+      if (!plan || meals.length === 0 || days.length === 0) {
+        document.getElementById('result').innerText = 'Pilih paket, jenis makan, dan hari pengiriman.';
+        return;
+      }
+
+      const harga = {
+        "Diet Plan": 30000,
+        "Protein Plan": 40000,
+        "Royal Plan": 60000
+      }[plan];
+
+      const total = hitungHarga(plan, meals, days);
+      document.getElementById('result').innerText = `Total Harga Langganan Anda:\n${formatRumus(harga, meals.length, days.length)}\n= Rp${total.toLocaleString('id-ID')},00`;
+    }
+
+    document.getElementById('subscribeForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const plan = document.getElementById('plan').value;
+      const meals = [...document.querySelectorAll('input[name="meal"]:checked')].map(m => m.value);
+      const days = [...document.querySelectorAll('input[name="days"]:checked')].map(d => d.value);
+      const phone = document.getElementById('phone').value.trim();
+      const phonePattern = /^\+62\d{9,13}$/;
+
+      if (!phonePattern.test(phone)) {
+        alert('Nomor HP harus diawali dengan +62 dan mengandung 9–13 digit.');
+        return;
+      }
+
+      const total_price = hitungHarga(plan, meals, days);
+
+      const data = {
+        name: document.getElementById('name').value,
+        phone,
+        plan,
+        meal_types: meals,
+        delivery_days: days,
+        allergies: document.getElementById('allergies').value,
+        total_price
+      };
+
+      await fetch('http://localhost:3000/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      alert('Pesanan berhasil dikirim!');
+      this.reset();
+      document.getElementById('result').innerText = 'Klik "Hitung Harga" untuk melihat total langganan.';
+    });
+
+    document.getElementById('testimonialForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('userName').value.trim();
+      const message = document.getElementById('userTestimonial').value.trim();
+      const rating = parseInt(document.getElementById('userRating').value);
+
+      if (!name || !message || rating < 1 || rating > 5) {
+        alert("Pastikan nama, testimoni, dan rating (1–5) diisi dengan benar.");
+        return;
+      }
+
+      await fetch('http://localhost:3000/api/testimonials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customer_name: name, message, rating })
+      });
+
+      alert('Testimoni berhasil dikirim!');
+      this.reset();
+    });
+  </script>
+</body>
+</html>

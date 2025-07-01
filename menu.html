@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meal Plans - SEA Catering</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">SEA Catering</div>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="menu.html" class="nav-link">Meal Plans</a></li>
+      <li><a href="subscription.html" class="nav-link">Subscription</a></li>
+    </ul>
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+  </nav>
+
+  <main class="meal-container">
+    <h2>Meal Plans Kami</h2>
+
+    <div class="meal-row">
+      <div class="meal-card">
+        <alt="Diet Plan />
+        <h3>Diet Plan</h3>
+        <p><strong>Harga:</strong> Rp30.000 / meal</p>
+        <p>Menu seimbang rendah kalori untuk membantu program diet sehat.</p>
+        <div class="extra-detail" id="detail-diet" style="display: none;">
+          <ul>
+            <li><strong>Kalori:</strong> Rata-rata 1200–1500 per hari</li>
+            <li><strong>Bahan:</strong> Bahan segar, rendah lemak, tanpa tambahan gula</li>
+          </ul>
+        </div>
+        <button onclick="toggleDetails('diet', this)">See More Details</button>
+      </div>
+
+      <div class="meal-card">
+        <alt="Protein Plan />
+        <h3>Protein Plan</h3>
+        <p><strong>Harga:</strong> Rp40.000 / meal</p>
+        <p>Paket tinggi protein untuk pembentukan otot dan pemulihan tubuh.</p>
+        <div class="extra-detail" id="detail-protein" style="display: none;">
+          <ul>
+            <li><strong>Kalori:</strong> 1800–2000 per hari</li>
+            <li><strong>Bahan:</strong> Ayam, ikan, telur, kacang-kacangan (cocok untuk diet keto)</li>
+          </ul>
+        </div>
+        <button onclick="toggleDetails('protein', this)">See More Details</button>
+      </div>
+
+      <div class="meal-card">
+        <alt="Royal Plan />
+        <h3>Royal Plan</h3>
+        <p><strong>Harga:</strong> Rp60.000 / meal</p>
+        <p>Paket premium lengkap untuk pengalaman makan sehat yang mewah.</p>
+        <div class="extra-detail" id="detail-royal" style="display: none;">
+          <ul>
+            <li><strong>Kalori:</strong> Fleksibel (dapat disesuaikan)</li>
+            <li><strong>Bahan:</strong> Makanan gourmet, dessert sehat, infused water, snack sehat</li>
+          </ul>
+        </div>
+        <button onclick="toggleDetails('royal', this)">See More Details</button>
+      </div>
+
+    </div>
+
+    <section class="testimonial-section">
+      <h2>Testimoni Pelanggan</h2>
+      <div id="testimonial-slider">Memuat testimoni...</div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleDetails(plan, btnElement) {
+      const detail = document.getElementById('detail-' + plan);
+      if (detail.style.display === 'none' || detail.style.display === '') {
+        detail.style.display = 'block';
+        btnElement.textContent = 'Hide Details';
+      } else {
+        detail.style.display = 'none';
+        btnElement.textContent = 'See More Details';
+      }
+    }
+  </script>
+
+  <script>
+    let currentIndex = 0;
+    let testimonials = [];
+
+    async function loadTestimonialsToMenu() {
+      try {
+        const res = await fetch('http://localhost:3000/api/testimonials');
+        const data = await res.json();
+        testimonials = data;
+        if (testimonials.length === 0) {
+          document.getElementById('testimonial-slider').innerHTML = '<p>-belum ada testimoni-</p>';
+          return;
+        }
+        showTestimonial(currentIndex);
+        setInterval(() => {
+          currentIndex = (currentIndex + 1) % testimonials.length;
+          showTestimonial(currentIndex);
+        }, 4000);
+      } catch (err) {
+        document.getElementById('testimonial-slider').innerHTML = '<p>Gagal memuat testimoni.</p>';
+        console.error(err);
+      }
+    }
+
+    function showTestimonial(index) {
+      const container = document.getElementById('testimonial-slider');
+      const item = testimonials[index];
+      container.innerHTML = `
+        <div class="testimonial active">
+          <p>"${item.message.replace(/\n/g, '<br>')}"</p>
+          <strong>- ${item.customer_name}, ⭐${'⭐'.repeat(item.rating)}</strong>
+        </div>
+      `;
+    }
+
+    window.onload = loadTestimonialsToMenu;
+  </script>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
